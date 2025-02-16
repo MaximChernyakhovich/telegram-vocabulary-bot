@@ -128,7 +128,7 @@ class Vocabulary:
         first_definition = first_meaning["definitions"][0]["definition"] if "definitions" in first_meaning else "Нет данных"
         
         # Короткое описание
-        result = f"📖 {word} ({details['phonetic']}) — {libre_translation['translatedText'] if len(word) <= 3 else translation}\n"
+        result = f"📖 {word} ({details.get('phonetic', '')}) — {libre_translation['translatedText'] if len(word) <= 3 else translation}\n"
         result += f"🔹 {first_definition}\n"
         result += f"🔗 {details['sourceUrls'][0]}"
         

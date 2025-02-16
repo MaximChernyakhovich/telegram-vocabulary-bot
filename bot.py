@@ -41,6 +41,7 @@ class BotHandler:
         self.user_instance = None
         self.operations_instance = None
         self.vocabulary_handler = VocabularyHandler(self.bot)
+        self.register_handlers()
 
     def handle_start(self, message):
         # Обработка команды /start
@@ -100,14 +101,39 @@ class BotHandler:
         # Отправка списка слов пользователя
         self.vocabulary_handler.send_word_list(message)
 
+    def handle_test_answer(self, call):
+        answer = call.data.split("_", 1)[1]  # Получаем ответ пользователя
+        word = "apple"  # Слово для перевода
+        correct_answer = 'яблоко'  # Правильный ответ
+        if answer == correct_answer:
+            # Обновляем сообщение, чтобы показать правильный ответ
+            self.bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"Как переводится слово *{word}*?\n\n✅ Правильно! Ответ: {correct_answer}",
+                parse_mode="Markdown"
+            )
+        else:
+            # Обновляем сообщение, чтобы показать неправильный ответ
+            self.bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"Как переводится слово *{word}*?\n\n❌ Неправильно!",
+                parse_mode="Markdown"
+            )
+
+    def register_handlers(self):
+        # Обрабатываем все ответы на тесты
+        self.bot.callback_query_handler(func=lambda call: call.data.startswith("test_"))(self.handle_test_answer)
+
     def start_polling(self):
         # Запуск процесса polling
         while True:
-            try:
+            #try:
                 self.bot.polling(none_stop=True, interval=1)
-            except:
-                print('restart')
-                time.sleep(2)
+            # except:
+            #     print('restart')
+            #     time.sleep(2)
 
 
 api_token_key = os.getenv("API_KEY")

@@ -5,6 +5,19 @@ class VocabularyHandler:
     def __init__(self, bot):
         self.bot = bot
         self.register_handlers()
+
+    def handle_inline_callback(self, call):
+        """Обработка инлайн-кнопок словаря"""
+        if call.data.startswith("prev") or call.data.startswith("next"):
+            self.callback_query(call)
+        elif call.data.startswith("word_"):
+            self.show_word_details(call)
+        elif call.data.startswith("details_"):
+            self.show_word_full_details(call)
+        elif call.data.startswith("back_to_word_"):
+            self.go_back_to_word(call)
+        elif call.data.startswith("back_to_list_"):
+            self.go_back(call)
     
     def get_words(self, message):
         #return Keyboards(message.chat.id).get_words()
