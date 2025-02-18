@@ -50,7 +50,7 @@ class Translator:
             return translated_text
         return None
 
-translator = Translator()
-word = "apple"
-translated_word = translator.translate(word)
-print(f"Перевод: '{word}': {translated_word}")
+# translator = Translator()
+# word = "apple"
+# translated_word = translator.translate(word)
+# print(f"Перевод: '{word}': {translated_word}")

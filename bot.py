@@ -4,6 +4,7 @@ from telebot import types
 from user import User
 from vocabulary import Vocabulary
 from keyboards import Keyboards
+from translator import Translator
 from vocabulary_handler import VocabularyHandler
 import os
 from dotenv import load_dotenv
@@ -16,23 +17,6 @@ env_path = Path(__file__).parent / ".env"  # Полный путь к .env
 load_dotenv(dotenv_path=env_path)
 
 # сделать список актуальных слов для изучения и выученных слов
-
-def google_trans(word):
-    # Можно использовать для бота в качестве быстрого переводчика
-    url = "https://translate.googleapis.com/translate_a/single"
-    params = {
-        "client": "gtx",
-        "sl": "en",  # Исходный язык
-        "tl": "ru",  # Язык перевода
-        "dt": "t",
-        "q": word # Текст для перевода
-    }
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        translated_text = response.json()[0][0][0]
-    else:
-        print("Error:", response.status_code, response.text)
-    return translated_text
 
 class BotHandler:
     def __init__(self, api_token_key):
@@ -92,9 +76,11 @@ class BotHandler:
         ic(user_data)
 
     def process_translation(self, message, user_data):
-        # Обработка перевода
-        user_data['translation'] = message.text
-        self.bot.send_message(message.chat.id, f"Перевод:\n\n{google_trans(user_data['translation'])}")
+        # Обработка перевода слова или фразы
+        text = message.text
+        translator = Translator()
+        user_data['translation'] = translator.translate(text) 
+        self.bot.send_message(message.chat.id, f"Перевод слова {text}:\n\n{user_data['translation']}")
         ic(user_data)
 
     def send_vocabulary_list(self, message):
