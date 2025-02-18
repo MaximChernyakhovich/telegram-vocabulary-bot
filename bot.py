@@ -72,16 +72,30 @@ class BotHandler:
         # Запрос слова или фразы для перевода
         self.bot.send_message(message.chat.id, 'Введите слово или фразу:')
         user_data = {}
-        self.bot.register_next_step_handler(message, lambda msg: self.process_translation(msg, user_data))
+        self.bot.register_next_step_handler(message, lambda msg: self.process_translation(msg))
         ic(user_data)
 
-    def process_translation(self, message, user_data):
+    def process_translation(self, message):
         # Обработка перевода слова или фразы
         text = message.text
         translator = Translator()
-        user_data['translation'] = translator.translate(text) 
-        self.bot.send_message(message.chat.id, f"Перевод слова {text}:\n\n{user_data['translation']}")
-        ic(user_data)
+        translation = Translator().translate(text) 
+        detect_lang = translator.detect_language(text)
+
+        # Добавляем инлайновую клавиатуру
+        keyboard = types.InlineKeyboardMarkup()
+        add_button = types.InlineKeyboardButton(
+            text="Добавить в словарь",  callback_data=f"translate_add_word:{text}:{translation}"
+        )
+        keyboard.add(add_button)
+        
+        if len(text.split()) == 1:
+            if detect_lang == 'en':
+                self.bot.send_message(message.chat.id, f"Перевод слова '{text}':\n\n{translation}", reply_markup=keyboard)
+            else:
+                self.bot.send_message(message.chat.id, f"Перевод слова '{text}':\n\n{translation}")
+        else:
+            self.bot.send_message(message.chat.id, f"Перевод текста:\n\n{translation}")
 
     def send_vocabulary_list(self, message):
         # Отправка списка слов пользователя
@@ -107,10 +121,31 @@ class BotHandler:
                 text=f"Как переводится слово *{word}*?\n\n❌ Неправильно!",
                 parse_mode="Markdown"
             )
-
+    
     def register_handlers(self):
-        # Обрабатываем все ответы на тесты
+        # Регистрация всех callback handlers
         self.bot.callback_query_handler(func=lambda call: call.data.startswith("test_"))(self.handle_test_answer)
+        self.bot.callback_query_handler(func=lambda call: call.data.startswith("translate_add_word:"))(self.handle_translate_add_word)
+
+    def handle_translate_add_word(self, call):
+        try:
+            # Извлечение слова и перевода из callback_data
+            _, word, translation = call.data.split(':')
+
+            # Логика добавления слова в словарь
+            vc = Vocabulary(tg_id=call.message.chat.id, words=[word])
+            vc.add_words()
+
+            # Обновляем сообщение с подтверждением добавления
+            self.bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"Слово '{word}' добавлено в ваш словарь!"
+            )
+        except Exception as e:
+            # Логирование ошибок
+            self.bot.send_message(call.message.chat.id, "Произошла ошибка при добавлении слова.")
+            print(f"Ошибка при обработке перевода: {e}")
 
     def start_polling(self):
         # Запуск процесса polling
